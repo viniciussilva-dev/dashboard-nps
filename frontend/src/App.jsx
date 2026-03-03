@@ -1,18 +1,26 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './AuthContext';
+import PrivateRoute from './PrivateRoute';
+import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
 import CursoDetalhes from './pages/CursoDetalhes';
+import CookieBanner from './components/CookieBanner';
 import './index.css';
 
 function App() {
   return (
-    <Router>
-      <div className="app">
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/curso/:nomeCurso" element={<CursoDetalhes />} />
-        </Routes>
-      </div>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <div className="app">
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+            <Route path="/curso/:nomeCurso" element={<PrivateRoute><CursoDetalhes /></PrivateRoute>} />
+          </Routes>
+          <CookieBanner />
+        </div>
+      </Router>
+    </AuthProvider>
   );
 }
 
