@@ -32,13 +32,14 @@ const LoginPage = () => {
         <div className="login-bg-orb orb2"></div>
         <div className="login-bg-orb orb3"></div>
       </div>
+
       <div className="login-card">
         <div className="login-logo-wrap">
-          <div className="login-logo">☀️</div>
-          <div className="login-logo-ring"></div>
+          <img src="/logo-canalsolar.webp" alt="Canal Solar" className="login-logo-img" />
         </div>
-        <h1 className="login-title">Canal Solar</h1>
+
         <p className="login-subtitle">Dashboard NPS — Acesso restrito</p>
+
         <form className="login-form" onSubmit={handleSubmit}>
           <div className="login-field">
             <label>Usuário</label>
@@ -54,6 +55,7 @@ const LoginPage = () => {
               />
             </div>
           </div>
+
           <div className="login-field">
             <label>Senha</label>
             <div className="login-input-wrap">
@@ -66,17 +68,28 @@ const LoginPage = () => {
                 autoComplete="current-password"
                 required
               />
-              <button type="button" className="login-toggle-pass"
-                onClick={() => setShowPass(v => !v)} tabIndex={-1}>
+              <button
+                type="button"
+                className="login-toggle-pass"
+                onClick={() => setShowPass(v => !v)}
+                tabIndex={-1}
+              >
                 {showPass ? '🙈' : '👁️'}
               </button>
             </div>
           </div>
+
           {error && <div className="login-error">⚠️ {error}</div>}
-          <button type="submit" className={"login-btn" + (loading ? " loading" : "")} disabled={loading}>
-            {loading ? <span className="login-spinner"></span> : 'Entrar →'}
+
+          <button
+            type="submit"
+            className={"login-btn" + (loading ? " loading" : "")}
+            disabled={loading}
+          >
+            {loading ? <span className="login-spinner"></span> : 'Entrar'}
           </button>
         </form>
+
         <p className="login-footer">Acesso exclusivo para colaboradores Canal Solar</p>
       </div>
     </div>
