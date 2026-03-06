@@ -22,17 +22,11 @@ const CursoDetalhes = () => {
         setLoading(false);
       }
     };
-
     fetchCursoData();
   }, [nomeCurso]);
 
-  if (loading) {
-    return <div className="loading-screen"><div className="spinner"></div></div>;
-  }
-
-  if (!data) {
-    return <div className="error-screen">Curso não encontrado</div>;
-  }
+  if (loading) return <div className="loading-screen"><div className="spinner"></div></div>;
+  if (!data) return <div className="error-screen">Curso não encontrado</div>;
 
   const getBadgeColor = (nps) => {
     if (nps < 0) return '#EF4444';
@@ -48,7 +42,6 @@ const CursoDetalhes = () => {
     return 'Excelência ⭐';
   };
 
-  // Distribuição de notas para o gráfico
   const distribuicao = Array.from({ length: 11 }, (_, i) => ({
     nota: i,
     count: data.respostas.filter(r => r.nota_geral === i).length
@@ -57,20 +50,17 @@ const CursoDetalhes = () => {
   const promotores = data.respostas.filter(r => r.nota_geral >= 9);
   const neutros = data.respostas.filter(r => r.nota_geral >= 7 && r.nota_geral <= 8);
   const detratores = data.respostas.filter(r => r.nota_geral <= 6);
-  const comFeedback = data.respostas.filter(r => 
-    (r.feedback_positivo && r.feedback_positivo.trim()) || 
+  const comFeedback = data.respostas.filter(r =>
+    (r.feedback_positivo && r.feedback_positivo.trim()) ||
     (r.feedback_negativo && r.feedback_negativo.trim())
   );
 
   const renderResposta = (r) => {
     const notaColor = r.nota_geral >= 9 ? '#10B981' : r.nota_geral >= 7 ? '#3B82F6' : '#EF4444';
     const fb = r.feedback_positivo?.trim() || r.feedback_negativo?.trim();
-    
     return (
       <div key={r.id} className="resposta-card">
-        <div className="resposta-nota" style={{ backgroundColor: notaColor }}>
-          {r.nota_geral}
-        </div>
+        <div className="resposta-nota" style={{ backgroundColor: notaColor }}>{r.nota_geral}</div>
         <div className="resposta-info">
           <div className="resposta-notas-detail">
             {r.nota_professores && <span className="nota-pill">👨‍🏫 Prof: {r.nota_professores}/5</span>}
@@ -92,47 +82,34 @@ const CursoDetalhes = () => {
 
   return (
     <div className="curso-detalhes">
-      {/* Header */}
       <header className="curso-header">
-        <button onClick={() => navigate('/')} className="btn-back">
-          <ArrowLeft size={20} />
-          Voltar
-        </button>
-        <div className="curso-header-badge" style={{ backgroundColor: getBadgeColor(data.nps) }}>
-          {Math.round(data.nps)}
+        <div className="curso-header-top">
+          <img src="/logo-canalsolar.webp" alt="Canal Solar" className="header-logo" />
+          <div className="header-divider"></div>
+          <button onClick={() => navigate('/')} className="btn-back">
+            <ArrowLeft size={18} />
+            Voltar ao Dashboard
+          </button>
         </div>
-        <div className="curso-header-info">
-          <h1>{data.nome}</h1>
-          <p>{getNPSZone(data.nps)} · NPS {Math.round(data.nps)}</p>
+        <div className="curso-header-bottom">
+          <div className="curso-header-badge" style={{ backgroundColor: getBadgeColor(data.nps) }}>
+            {Math.round(data.nps)}
+          </div>
+          <div className="curso-header-info">
+            <h1>{data.nome}</h1>
+            <p>{getNPSZone(data.nps)} · NPS {Math.round(data.nps)}</p>
+          </div>
         </div>
       </header>
 
       <main className="curso-main">
-        {/* Mini KPIs */}
         <section className="mini-kpis">
-          <div className="mini-kpi">
-            <Users size={24} />
-            <div className="mini-kpi-value">{data.total_respostas}</div>
-            <div className="mini-kpi-label">Respostas</div>
-          </div>
-          <div className="mini-kpi">
-            <ThumbsUp size={24} />
-            <div className="mini-kpi-value">{data.promotores}</div>
-            <div className="mini-kpi-label">Promotores</div>
-          </div>
-          <div className="mini-kpi">
-            <Meh size={24} />
-            <div className="mini-kpi-value">{data.neutros}</div>
-            <div className="mini-kpi-label">Neutros</div>
-          </div>
-          <div className="mini-kpi">
-            <ThumbsDown size={24} />
-            <div className="mini-kpi-value">{data.detratores}</div>
-            <div className="mini-kpi-label">Detratores</div>
-          </div>
+          <div className="mini-kpi"><Users size={24} /><div className="mini-kpi-value">{data.total_respostas}</div><div className="mini-kpi-label">Respostas</div></div>
+          <div className="mini-kpi"><ThumbsUp size={24} /><div className="mini-kpi-value">{data.promotores}</div><div className="mini-kpi-label">Promotores</div></div>
+          <div className="mini-kpi"><Meh size={24} /><div className="mini-kpi-value">{data.neutros}</div><div className="mini-kpi-label">Neutros</div></div>
+          <div className="mini-kpi"><ThumbsDown size={24} /><div className="mini-kpi-value">{data.detratores}</div><div className="mini-kpi-label">Detratores</div></div>
         </section>
 
-        {/* Médias */}
         {data.medias.nota_professores && (
           <section className="medias-section">
             <h2 className="section-title">Médias de Notas</h2>
@@ -159,53 +136,34 @@ const CursoDetalhes = () => {
           </section>
         )}
 
-        {/* Distribuição */}
         <section className="distribuicao-section">
           <h2 className="section-title">Distribuição de Notas</h2>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={distribuicao}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="nota" label={{ value: 'Nota', position: 'insideBottom', offset: -5 }} />
+              <XAxis dataKey="nota" />
               <YAxis />
               <Tooltip />
-              <Bar dataKey="count" fill="#3B82F6" />
+              <Bar dataKey="count" fill="#E8192C" radius={[4,4,0,0]} />
             </BarChart>
           </ResponsiveContainer>
         </section>
 
-        {/* Tabs de Respostas */}
         <section className="respostas-section">
           <h2 className="section-title">Respostas Individuais</h2>
           <div className="tabs">
-            <button className={activeTab === 'todos' ? 'active' : ''} onClick={() => setActiveTab('todos')}>
-              📋 Todos ({data.respostas.length})
-            </button>
-            <button className={activeTab === 'promotores' ? 'active' : ''} onClick={() => setActiveTab('promotores')}>
-              👍 Promotores ({promotores.length})
-            </button>
-            <button className={activeTab === 'neutros' ? 'active' : ''} onClick={() => setActiveTab('neutros')}>
-              😐 Neutros ({neutros.length})
-            </button>
-            <button className={activeTab === 'detratores' ? 'active' : ''} onClick={() => setActiveTab('detratores')}>
-              👎 Detratores ({detratores.length})
-            </button>
-            <button className={activeTab === 'feedbacks' ? 'active' : ''} onClick={() => setActiveTab('feedbacks')}>
-              💬 Feedbacks ({comFeedback.length})
-            </button>
+            <button className={activeTab === 'todos' ? 'active' : ''} onClick={() => setActiveTab('todos')}>📋 Todos ({data.respostas.length})</button>
+            <button className={activeTab === 'promotores' ? 'active' : ''} onClick={() => setActiveTab('promotores')}>👍 Promotores ({promotores.length})</button>
+            <button className={activeTab === 'neutros' ? 'active' : ''} onClick={() => setActiveTab('neutros')}>😐 Neutros ({neutros.length})</button>
+            <button className={activeTab === 'detratores' ? 'active' : ''} onClick={() => setActiveTab('detratores')}>👎 Detratores ({detratores.length})</button>
+            <button className={activeTab === 'feedbacks' ? 'active' : ''} onClick={() => setActiveTab('feedbacks')}>💬 Feedbacks ({comFeedback.length})</button>
           </div>
-
           <div className="tab-content">
             {activeTab === 'todos' && data.respostas.map(renderResposta)}
             {activeTab === 'promotores' && promotores.map(renderResposta)}
             {activeTab === 'neutros' && neutros.map(renderResposta)}
             {activeTab === 'detratores' && detratores.map(renderResposta)}
             {activeTab === 'feedbacks' && comFeedback.map(renderResposta)}
-            {((activeTab === 'feedbacks' && comFeedback.length === 0) ||
-              (activeTab === 'promotores' && promotores.length === 0) ||
-              (activeTab === 'neutros' && neutros.length === 0) ||
-              (activeTab === 'detratores' && detratores.length === 0)) && (
-              <p className="empty-state">Nenhuma resposta nesta categoria.</p>
-            )}
           </div>
         </section>
       </main>
