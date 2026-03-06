@@ -1114,3 +1114,72 @@ body {
   border-bottom-color: #E8192C !important;
   background: rgba(232,25,44,0.08) !important;
 }
+
+/* ===================== FIX CURSO HEADER ===================== */
+.curso-header {
+  background: #0a1628 !important;
+  border-bottom: 3px solid #E8192C !important;
+  padding: 0 40px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+}
+
+.curso-header-top {
+  height: 70px;
+  display: flex !important;
+  align-items: center !important;
+  gap: 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.curso-header-top .header-logo {
+  height: 44px;
+  width: auto;
+  border-radius: 8px;
+}
+
+.curso-header-top .header-divider {
+  width: 1px;
+  height: 36px;
+  background: rgba(255,255,255,0.15);
+  flex-shrink: 0;
+}
+
+.curso-header-top .btn-back {
+  margin-left: auto;
+}
+
+.curso-header-bottom {
+  padding: 20px 0 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 20px !important;
+  flex-direction: row !important;
+}
+
+.curso-header-badge {
+  width: 64px !important;
+  height: 64px !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 1.4rem !important;
+  font-weight: 900 !important;
+  color: #fff !important;
+  flex-shrink: 0 !important;
+  border: 3px solid rgba(255,255,255,0.2) !important;
+}
+
+.curso-header-info h1 {
+  font-size: 1.5rem !important;
+  font-weight: 800 !important;
+  color: #fff !important;
+  margin-bottom: 4px !important;
+}
+
+.curso-header-info p {
+  font-size: 0.85rem !important;
+  color: #94a3b8 !important;
+}

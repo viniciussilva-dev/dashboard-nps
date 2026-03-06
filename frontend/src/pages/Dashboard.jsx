@@ -83,7 +83,7 @@ const Dashboard = () => {
           <div className="header-divider"></div>
           <div className="header-info">
             <h1>Dashboard NPS</h1>
-            <p>Pesquisa de satisfacao · {stats?.total_respostas || 0} respondentes</p>
+            <p>Pesquisa de satisfação · {stats?.total_respostas || 0} respondentes</p>
           </div>
           <div className="header-actions">
             <button onClick={fetchData} className="btn-refresh" disabled={loading}>
