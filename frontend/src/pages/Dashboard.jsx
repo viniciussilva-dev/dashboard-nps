@@ -88,6 +88,9 @@ const Dashboard = () => {
           <div className="header-actions">
             <button onClick={fetchData} className="btn-refresh" disabled={loading}>
               <RefreshCw size={16} className={loading ? 'spinning' : ''} />
+              <button onClick={() => navigate('/publicidade')} className="btn-refresh">
+                 📢 Publicidade
+            </button>
               Atualizar
             </button>
             <button onClick={handleLogout} className="btn-logout">
