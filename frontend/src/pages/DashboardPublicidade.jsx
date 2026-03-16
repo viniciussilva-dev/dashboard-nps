@@ -3,15 +3,15 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { RefreshCw, LogOut, ArrowLeft, Users, ThumbsUp, Meh, ThumbsDown } from 'lucide-react';
+import { RefreshCw, LogOut, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../AuthContext';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Cell
 } from 'recharts';
 import api from '../services/api';
+import NPSGauge from '../components/NPSGauge';
 
-// === CORES POR RESPOSTA ===
 const COR_RESPOSTA = {
   'Excelente': '#10B981',
   'Bom':       '#3B82F6',
@@ -20,7 +20,6 @@ const COR_RESPOSTA = {
   'Péssimo':   '#EF4444',
 };
 
-// === CORES NPS ===
 const corNPS = (nps) => {
   if (nps < 0)   return '#EF4444';
   if (nps <= 50) return '#F59E0B';
@@ -35,13 +34,11 @@ const zonaLabel = (nps) => {
   return 'Excelência ⭐';
 };
 
-// === NOTA PARA TEXTO ===
 const notaTexto = (n) => {
   const m = { 5:'Excelente', 4:'Bom', 3:'Regular', 2:'Ruim', 1:'Péssimo' };
   return m[Math.round(n)] || '-';
 };
 
-// === COMPONENTE GRÁFICO DE CRITÉRIO ===
 const GraficoCriterio = ({ titulo, dados }) => (
   <div className="criterio-card">
     <h3 className="criterio-titulo">{titulo}</h3>
@@ -50,10 +47,7 @@ const GraficoCriterio = ({ titulo, dados }) => (
         <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
         <XAxis dataKey="label" tick={{ fontSize: 11 }} />
         <YAxis tick={{ fontSize: 11 }} />
-        <Tooltip
-          formatter={(v) => [`${v} respostas`, '']}
-          labelStyle={{ fontWeight: 700 }}
-        />
+        <Tooltip formatter={(v) => [`${v} respostas`, '']} labelStyle={{ fontWeight: 700 }} />
         <Bar dataKey="count" radius={[6,6,0,0]}>
           {dados.map((d) => (
             <Cell key={d.label} fill={COR_RESPOSTA[d.label] || '#94a3b8'} />
@@ -64,7 +58,6 @@ const GraficoCriterio = ({ titulo, dados }) => (
   </div>
 );
 
-// === COMPONENTE CARD DE RESPOSTA ===
 const RespostaCard = ({ r }) => {
   const cor = r.indicaria_amigo >= 9 ? '#10B981' : r.indicaria_amigo >= 7 ? '#3B82F6' : '#EF4444';
   const mapa = { 5:'Excelente', 4:'Bom', 3:'Regular', 2:'Ruim', 1:'Péssimo' };
@@ -94,7 +87,6 @@ const RespostaCard = ({ r }) => {
   );
 };
 
-// === PÁGINA PRINCIPAL ===
 const DashboardPublicidade = () => {
   const [stats, setStats]         = useState(null);
   const [respostas, setRespostas] = useState([]);
@@ -149,11 +141,7 @@ const DashboardPublicidade = () => {
   const comFeedback = respostas.filter(r => r.feedback?.trim());
 
   const abaAtiva = {
-    todos:      respostas,
-    promotores,
-    neutros,
-    detratores,
-    feedbacks:  comFeedback,
+    todos: respostas, promotores, neutros, detratores, feedbacks: comFeedback,
   }[aba] || respostas;
 
   const criterios = [
@@ -164,10 +152,12 @@ const DashboardPublicidade = () => {
     { key: 'satisfacao',   titulo: '😊 Satisfação Geral' },
   ];
 
+  // Comprimento do arco semicircular para dasharray
+  const arcLen = 251;
+  const filled = (Math.min(Math.max(nps, 0), 100) / 100) * arcLen;
+
   return (
     <div className="dashboard">
-
-      {/* === HEADER === */}
       <header className="dashboard-header">
         <div className="header-content">
           <img src="/logo-canalsolar.webp" alt="Canal Solar" className="header-logo" />
@@ -194,44 +184,7 @@ const DashboardPublicidade = () => {
 
         {/* === NPS HERO === */}
         <section className="nps-hero-section">
-          <div className="nps-gauge">
-            <div className="gauge-chart">
-              <svg width="200" height="200" viewBox="0 0 200 200">
-                {/* Arco de fundo */}
-                <path
-                  d="M 30 140 A 80 80 0 0 1 170 140"
-                  fill="none" stroke="#E5E7EB" strokeWidth="18" strokeLinecap="round"
-                />
-                {/* Arco colorido proporcional ao NPS */}
-                {nps > 0 && (
-                  <path
-                    d="M 30 140 A 80 80 0 0 1 170 140"
-                    fill="none"
-                    stroke={corAtual}
-                    strokeWidth="18"
-                    strokeLinecap="round"
-                    strokeDasharray={`${(Math.min(nps,100)/100)*251} 251`}
-                  />
-                )}
-              </svg>
-              <div className="gauge-value">
-                <div className="gauge-number" style={{ color: corAtual }}>{Math.round(nps)}</div>
-                <div className="gauge-label">NPS</div>
-              </div>
-            </div>
-            <div className="gauge-info">
-              <h2>NPS: {Math.round(nps)} — {zonaLabel(nps)}</h2>
-              <p style={{ color: '#94a3b8', fontSize: '.9rem', marginTop: 6 }}>
-                Área de Publicidade e Comunicação
-              </p>
-              <div className="nps-zones" style={{ marginTop: 16 }}>
-                <span className="zone-badge zone-crit">😞 Crítico &lt; 0</span>
-                <span className="zone-badge zone-aper">⚙️ Aperfeiçoamento 0–50</span>
-                <span className="zone-badge zone-qual">🎯 Qualidade 51–70</span>
-                <span className="zone-badge zone-exc">⭐ Excelência &gt; 70</span>
-              </div>
-            </div>
-          </div>
+          <NPSGauge nps={nps} />
         </section>
 
         {/* === KPIs === */}
@@ -267,11 +220,7 @@ const DashboardPublicidade = () => {
           <div className="criterios-grid">
             {criterios.map(c => (
               stats?.graficos?.[c.key] && (
-                <GraficoCriterio
-                  key={c.key}
-                  titulo={c.titulo}
-                  dados={stats.graficos[c.key]}
-                />
+                <GraficoCriterio key={c.key} titulo={c.titulo} dados={stats.graficos[c.key]} />
               )
             ))}
           </div>
@@ -332,18 +281,14 @@ const DashboardPublicidade = () => {
               { key:'detratores', label:`👎 Detratores (${detratores.length})` },
               { key:'feedbacks',  label:`💬 Feedbacks (${comFeedback.length})` },
             ].map(t => (
-              <button
-                key={t.key}
-                className={aba === t.key ? 'active' : ''}
-                onClick={() => setAba(t.key)}
-              >{t.label}</button>
+              <button key={t.key} className={aba === t.key ? 'active' : ''} onClick={() => setAba(t.key)}>
+                {t.label}
+              </button>
             ))}
           </div>
           <div className="tab-content">
             {abaAtiva.map(r => <RespostaCard key={r.id} r={r} />)}
-            {abaAtiva.length === 0 && (
-              <p className="empty-state">Nenhuma resposta nesta categoria.</p>
-            )}
+            {abaAtiva.length === 0 && <p className="empty-state">Nenhuma resposta nesta categoria.</p>}
           </div>
         </section>
 
