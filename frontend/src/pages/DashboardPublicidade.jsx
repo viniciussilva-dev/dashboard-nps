@@ -195,8 +195,8 @@ const DashboardPublicidade = () => {
         {/* === NPS HERO === */}
         <section className="nps-hero-section">
           <div className="nps-gauge">
-            <div className="gauge-chart" style={{ position: 'relative', width: 200, height: 200, flexShrink: 0 }}>
-              <svg width="200" height="200" viewBox="0 0 200 200" style={{ display: 'block' }}>
+            <div className="gauge-chart">
+              <svg width="200" height="200" viewBox="0 0 200 200">
                 {/* Arco de fundo */}
                 <path
                   d="M 30 140 A 80 80 0 0 1 170 140"
@@ -214,7 +214,7 @@ const DashboardPublicidade = () => {
                   />
                 )}
               </svg>
-              <div style={{ position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)', textAlign: 'center' }}>
+              <div className="gauge-value">
                 <div className="gauge-number" style={{ color: corAtual }}>{Math.round(nps)}</div>
                 <div className="gauge-label">NPS</div>
               </div>
