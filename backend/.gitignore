@@ -26,3 +26,9 @@ Thumbs.db
 
 # Cache
 .cache/
+
+# Scripts temporários de importação
+exportar_dados.py
+dados_producao.sql
+*.sql
+deletar_testes.py
