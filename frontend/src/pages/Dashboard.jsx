@@ -1,3 +1,11 @@
+// === PÁGINA: Dashboard.jsx ===
+// Arquivo: frontend/src/pages/Dashboard.jsx
+//
+// O que foi alterado em relação à versão anterior:
+//   1. CORRIGIDO: o botão "📢 Publicidade" estava DENTRO do botão "Atualizar"
+//      (HTML inválido — botão dentro de botão não funciona corretamente)
+//   2. ADICIONADO: botão "🔧 Engenharia" no header, igual ao de Publicidade
+
 import { useState, useEffect } from 'react';
 import { npsAPI } from '../services/api';
 import NPSGauge from '../components/NPSGauge';
@@ -8,23 +16,28 @@ import { useAuth } from '../AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState(null);
-  const [cursos, setCursos] = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [stats, setStats]       = useState(null);
+  const [cursos, setCursos]     = useState([]);
   const [respostas, setRespostas] = useState([]);
-  const [error, setError] = useState(null);
-  const { logout, user } = useAuth();
-  const navigate = useNavigate();
+  const [error, setError]       = useState(null);
 
+  const { logout } = useAuth();
+  const navigate   = useNavigate();
+
+  // === FUNÇÃO: Busca todos os dados da API de Cursos ===
   const fetchData = async () => {
     try {
       setLoading(true);
       setError(null);
+
+      // Faz as 3 requisições ao mesmo tempo para ser mais rápido
       const [statsRes, cursosRes, respostasRes] = await Promise.all([
-        npsAPI.getStats(),
-        npsAPI.getCursos(),
-        npsAPI.getRespostas({ limit: 100 })
+        npsAPI.getStats(),                    // Estatísticas gerais (NPS, promotores...)
+        npsAPI.getCursos(),                   // Lista de cursos com NPS individual
+        npsAPI.getRespostas({ limit: 100 })   // Últimas 100 respostas (para feedbacks)
       ]);
+
       setStats(statsRes.data);
       setCursos(cursosRes.data);
       setRespostas(respostasRes.data);
@@ -36,17 +49,21 @@ const Dashboard = () => {
     }
   };
 
+  // === EFEITO: Carrega ao abrir e atualiza a cada 30 segundos ===
   useEffect(() => {
     fetchData();
     const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
   }, []);
 
+  // === PREPARA OS FEEDBACKS PARA EXIBIÇÃO ===
+  // Pega os 10 feedbacks positivos mais recentes
   const feedbacksPositivos = respostas
     .filter(r => r.feedback_positivo && r.feedback_positivo.trim())
     .slice(0, 10)
     .map(r => ({ texto: r.feedback_positivo, curso: r.nome_curso, nota: r.nota_geral, data: r.data_resposta }));
 
+  // Pega os 10 feedbacks negativos mais recentes
   const feedbacksNegativos = respostas
     .filter(r => r.feedback_negativo && r.feedback_negativo.trim())
     .slice(0, 10)
@@ -57,6 +74,7 @@ const Dashboard = () => {
     navigate('/login');
   };
 
+  // === TELA DE CARREGAMENTO ===
   if (loading && !stats) {
     return (
       <div className="loading-screen">
@@ -66,6 +84,7 @@ const Dashboard = () => {
     );
   }
 
+  // === TELA DE ERRO ===
   if (error) {
     return (
       <div className="error-screen">
@@ -77,6 +96,8 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard">
+
+      {/* === CABEÇALHO === */}
       <header className="dashboard-header">
         <div className="header-content">
           <img src="/logo-canalsolar.webp" alt="Canal Solar" className="header-logo" />
@@ -85,27 +106,47 @@ const Dashboard = () => {
             <h1>Dashboard NPS</h1>
             <p>Pesquisa de satisfação · {stats?.total_respostas || 0} respondentes</p>
           </div>
+
+          {/* === BOTÕES DO HEADER ===
+              CORREÇÃO: anteriormente o botão Publicidade estava DENTRO
+              do botão Atualizar (HTML inválido). Agora todos estão separados
+              corretamente como irmãos dentro de header-actions. */}
           <div className="header-actions">
+
+            {/* Navega para o dashboard de Publicidade */}
+            <button onClick={() => navigate('/publicidade')} className="btn-refresh">
+              📢 Publicidade
+            </button>
+
+            {/* Navega para o dashboard de Engenharia ← NOVO */}
+            <button onClick={() => navigate('/engenharia')} className="btn-refresh">
+              🔧 Engenharia
+            </button>
+
+            {/* Atualiza os dados manualmente */}
             <button onClick={fetchData} className="btn-refresh" disabled={loading}>
               <RefreshCw size={16} className={loading ? 'spinning' : ''} />
-              <button onClick={() => navigate('/publicidade')} className="btn-refresh">
-                 📢 Publicidade
-            </button>
               Atualizar
             </button>
+
+            {/* Faz logout e volta para a tela de login */}
             <button onClick={handleLogout} className="btn-logout">
               <LogOut size={16} />
               Sair
             </button>
+
           </div>
         </div>
       </header>
 
       <main className="dashboard-main">
+
+        {/* === VELOCÍMETRO NPS GERAL === */}
         <section className="nps-hero-section">
           <NPSGauge nps={stats?.nps_score || 0} />
         </section>
 
+        {/* === KPIs GERAIS === */}
         <section className="metrics-section">
           <h2 className="section-title">Metricas Gerais</h2>
           <div className="kpi-grid">
@@ -132,6 +173,7 @@ const Dashboard = () => {
           </div>
         </section>
 
+        {/* === CARDS DE CURSOS === */}
         <section className="cursos-section">
           <h2 className="section-title">
             NPS por Curso
@@ -144,6 +186,7 @@ const Dashboard = () => {
           </div>
         </section>
 
+        {/* === FEEDBACKS === */}
         <section className="feedbacks-section">
           <h2 className="section-title">Principais Comentarios</h2>
           <div className="feedbacks-grid">
@@ -169,6 +212,7 @@ const Dashboard = () => {
             </div>
           </div>
         </section>
+
       </main>
     </div>
   );
