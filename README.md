@@ -1,6 +1,6 @@
 # 🌞 Dashboard NPS - Canal Solar
 
-Sistema de dashboard para visualização em tempo real de pesquisas de satisfação (NPS) dos cursos e da área de Publicidade do Canal Solar.
+Sistema de dashboard para visualização em tempo real de pesquisas de satisfação (NPS) dos cursos, da área de Publicidade e da área de Engenharia do Canal Solar.
 
 ## 📊 Funcionalidades
 
@@ -10,8 +10,11 @@ Sistema de dashboard para visualização em tempo real de pesquisas de satisfaç
 - ✅ Feedbacks positivos e negativos
 - ✅ Detalhamento de respostas individuais
 - ✅ Dashboard separado para Publicidade e Comunicação
+- ✅ Dashboard separado para Engenharia
 - ✅ Gráficos de avaliação por critério (Agilidade, Pontualidade, Qualidade, Custo-Benefício, Satisfação)
-- ✅ Webhook para integração com Typebot (Cursos e Comunicação)
+- ✅ Gráficos de avaliação por critério de Engenharia (Agilidade, Conhecimento Técnico, Qualidade, Pontualidade, Satisfação)
+- ✅ Feedbacks de melhoria por critério (quando nota < 8 no Typebot de Engenharia)
+- ✅ Webhook para integração com Typebot (Cursos, Comunicação e Engenharia)
 - ✅ Auto-atualização a cada 30 segundos
 - ✅ Sistema de login com autenticação por sessão
 
@@ -128,7 +131,6 @@ POST /api/comunicacao/webhook/typebot
 ```
 ```json
 {
-  "curso": "Comunicação",
   "nome": "Nome do respondente",
   "e-mail": "email@empresa.com",
   "empresa": "Nome da Empresa",
@@ -142,12 +144,38 @@ POST /api/comunicacao/webhook/typebot
 }
 ```
 
+### Webhook — Engenharia
+```
+POST /api/engenharia/webhook/typebot
+```
+```json
+{
+  "nome": "Nome do respondente",
+  "e-mail": "email@empresa.com",
+  "empresa": "Nome da Empresa",
+  "avaliacao_agilidade": 8,
+  "avaliacao_conhecimento_tecnico": 9,
+  "avaliacao_qualidade": 7,
+  "avaliacao_pontualidade": 10,
+  "avaliacao_satisfacao": 8,
+  "melhoria_agilidade": "Texto digitado se nota < 8, senão vazio",
+  "melhoria_conhecimento_tecnico": "",
+  "melhoria_qualidade": "Texto digitado se nota < 8, senão vazio",
+  "melhoria_pontualidade": "",
+  "melhoria_satisfacao": "",
+  "indicaria_amigo": 9
+}
+```
+
+> ⚠️ No Typebot de Engenharia, as avaliações de critério são notas de **1 a 10** (não texto). Quando o cliente dá nota menor que 8 em um critério, o Typebot exibe a pergunta "Pode nos contar o que poderia melhorar?" e salva a resposta na variável `melhoria_*` correspondente.
+
 ## 📊 Dados
 
 - **Banco de dados:** MySQL (produção) / MySQL local (desenvolvimento)
-- **Tabelas:** `respostas_nps` (cursos) e `respostas_comunicacao` (publicidade)
+- **Tabelas:** `respostas_nps` (cursos), `respostas_comunicacao` (publicidade) e `respostas_engenharia` (engenharia)
 - **Respostas NPS cursos:** 654 respostas
 - **Respostas Publicidade:** 88 respostas
+- **Respostas Engenharia:** 10 respostas (importadas do formulário histórico)
 - **NPS Cursos:** 69 (Zona de Qualidade 🎯)
 - **NPS Publicidade:** 77 (Zona de Excelência ⭐)
 
@@ -167,10 +195,13 @@ canalsolar-nps/
 ├── backend/
 │   ├── migrations/
 │   │   ├── 20260310_01_create_respostas_nps.js
-│   │   └── 20260310_02_create_respostas_comunicacao.js
+│   │   ├── 20260310_02_create_respostas_comunicacao.js
+│   │   ├── 20260318_03_create_respostas_engenharia.js
+│   │   └── 20260320_04_add_melhorias_engenharia.js
 │   ├── routes/
 │   │   ├── nps.js           # Rotas API cursos
-│   │   └── comunicacao.js   # Rotas API publicidade
+│   │   ├── comunicacao.js   # Rotas API publicidade
+│   │   └── engenharia.js    # Rotas API engenharia
 │   ├── server.js            # Servidor Express
 │   ├── database.js          # Conexão MySQL via Knex
 │   ├── knexfile.js          # Configuração Knex
@@ -180,23 +211,34 @@ canalsolar-nps/
 └── frontend/
     ├── src/
     │   ├── services/
-    │   │   └── api.js             # Cliente Axios
+    │   │   └── api.js                      # Cliente Axios
     │   ├── components/
-    │   │   ├── NPSGauge.jsx       # Velocímetro NPS
-    │   │   ├── CursoCard.jsx      # Card de curso
-    │   │   ├── FeedbackCard.jsx   # Card de feedback
-    │   │   └── CookieBanner.jsx   # Banner de cookies
+    │   │   ├── NPSGauge.jsx                # Velocímetro NPS
+    │   │   ├── CursoCard.jsx               # Card de curso
+    │   │   ├── FeedbackCard.jsx            # Card de feedback
+    │   │   └── CookieBanner.jsx            # Banner de cookies
     │   ├── pages/
-    │   │   ├── Dashboard.jsx           # Dashboard principal (cursos)
-    │   │   ├── DashboardPublicidade.jsx # Dashboard publicidade
-    │   │   ├── CursoDetalhes.jsx       # Detalhes de um curso
-    │   │   └── LoginPage.jsx           # Página de login
+    │   │   ├── Dashboard.jsx               # Dashboard principal (cursos)
+    │   │   ├── DashboardPublicidade.jsx    # Dashboard publicidade
+    │   │   ├── DashboardEngenharia.jsx     # Dashboard engenharia
+    │   │   ├── CursoDetalhes.jsx           # Detalhes de um curso
+    │   │   └── LoginPage.jsx               # Página de login
     │   ├── App.jsx         # App principal com rotas
     │   ├── AuthContext.jsx # Contexto de autenticação
     │   └── index.css       # Estilos globais
     ├── package.json
     └── vite.config.js
 ```
+
+## 🔐 Rotas do Sistema
+
+| Rota | Descrição |
+|---|---|
+| `/` | Dashboard principal — Cursos NPS |
+| `/publicidade` | Dashboard de Publicidade |
+| `/engenharia` | Dashboard de Engenharia |
+| `/curso/:nome` | Detalhes de um curso específico |
+| `/login` | Página de login |
 
 ## 👥 Equipe
 
