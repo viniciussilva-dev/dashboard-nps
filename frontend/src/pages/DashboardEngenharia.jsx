@@ -1,12 +1,11 @@
 // === PÁGINA: DashboardEngenharia.jsx ===
 // Arquivo: frontend/src/pages/DashboardEngenharia.jsx
 //
-// O que este arquivo faz:
-// Exibe o dashboard de NPS do setor de Engenharia do Canal Solar.
-// É uma cópia fiel do DashboardPublicidade.jsx com as seguintes diferenças:
-//   1. Consome /api/engenharia ao invés de /api/comunicacao
-//   2. O critério "Custo-Benefício" foi trocado por "Conhecimento Técnico"
-//   3. Título e textos ajustados para "Engenharia"
+// O que mudou nesta versão:
+// 1. RespostaCard agora exibe os feedbacks de melhoria por critério
+//    (melhoria_agilidade, melhoria_conhecimento_tecnico, etc.)
+// 2. A aba "Feedbacks" agora conta respostas que têm qualquer campo de melhoria
+// 3. As médias agora usam escala 1-10 no lugar de 1-5
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -19,36 +18,34 @@ import {
 import api from '../services/api';
 import NPSGauge from '../components/NPSGauge';
 
-// === CORES DOS GRÁFICOS DE CRITÉRIO ===
-// Cada resposta textual tem uma cor específica no gráfico de barras
 const COR_RESPOSTA = {
-  'Excelente': '#10B981', // Verde
-  'Bom':       '#3B82F6', // Azul
-  'Regular':   '#F59E0B', // Amarelo
-  'Ruim':      '#F97316', // Laranja
-  'Péssimo':   '#EF4444', // Vermelho
+  'Excelente': '#10B981',
+  'Bom':       '#3B82F6',
+  'Regular':   '#F59E0B',
+  'Ruim':      '#F97316',
+  'Péssimo':   '#EF4444',
 };
 
-// === FUNÇÃO: Retorna a cor do NPS conforme a zona ===
 const corNPS = (nps) => {
-  if (nps < 0)   return '#EF4444'; // Crítico → vermelho
-  if (nps <= 50) return '#F59E0B'; // Aperfeiçoamento → amarelo
-  if (nps <= 70) return '#3B82F6'; // Qualidade → azul
-  return '#10B981';                // Excelência → verde
+  if (nps < 0)   return '#EF4444';
+  if (nps <= 50) return '#F59E0B';
+  if (nps <= 70) return '#3B82F6';
+  return '#10B981';
 };
 
-// === FUNÇÃO: Converte número (1-5) para texto legível ===
+// === CONVERTE NOTA 1-10 PARA FAIXA DE TEXTO ===
+// 9-10 = Excelente, 7-8 = Bom, 5-6 = Regular, 3-4 = Ruim, 1-2 = Péssimo
 const notaTexto = (n) => {
-  const m = { 5:'Excelente', 4:'Bom', 3:'Regular', 2:'Ruim', 1:'Péssimo' };
-  return m[Math.round(n)] || '-';
+  if (!n) return '-';
+  if (n >= 9) return 'Excelente';
+  if (n >= 7) return 'Bom';
+  if (n >= 5) return 'Regular';
+  if (n >= 3) return 'Ruim';
+  return 'Péssimo';
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // COMPONENTE: GraficoCriterio
-// Renderiza um gráfico de barras coloridas para um critério de avaliação.
-// Props:
-//   titulo → texto exibido acima do gráfico (ex: "⚡ Agilidade no Atendimento")
-//   dados  → array [{ label: 'Excelente', count: 10 }, ...]
 // ─────────────────────────────────────────────────────────────────────────────
 const GraficoCriterio = ({ titulo, dados }) => (
   <div className="criterio-card">
@@ -60,7 +57,6 @@ const GraficoCriterio = ({ titulo, dados }) => (
         <YAxis tick={{ fontSize: 11 }} />
         <Tooltip formatter={(v) => [`${v} respostas`, '']} labelStyle={{ fontWeight: 700 }} />
         <Bar dataKey="count" radius={[6,6,0,0]}>
-          {/* Cada barra recebe a cor correspondente à resposta */}
           {dados.map((d) => (
             <Cell key={d.label} fill={COR_RESPOSTA[d.label] || '#94a3b8'} />
           ))}
@@ -72,15 +68,19 @@ const GraficoCriterio = ({ titulo, dados }) => (
 
 // ─────────────────────────────────────────────────────────────────────────────
 // COMPONENTE: RespostaCard
-// Exibe uma resposta individual com nota NPS, critérios e feedback.
-// Props:
-//   r → objeto da resposta vindo do banco (uma linha da tabela)
+// Exibe uma resposta individual com nota NPS, critérios e feedbacks de melhoria
 // ─────────────────────────────────────────────────────────────────────────────
 const RespostaCard = ({ r }) => {
-  // Define a cor da nota NPS (verde, azul ou vermelho)
   const cor = r.indicaria_amigo >= 9 ? '#10B981' : r.indicaria_amigo >= 7 ? '#3B82F6' : '#EF4444';
-  // Mapa para converter número em texto
-  const mapa = { 5:'Excelente', 4:'Bom', 3:'Regular', 2:'Ruim', 1:'Péssimo' };
+
+  // Verifica se existe algum feedback de melhoria em qualquer critério
+  const temMelhoria = [
+    r.melhoria_agilidade,
+    r.melhoria_conhecimento_tecnico,
+    r.melhoria_qualidade,
+    r.melhoria_pontualidade,
+    r.melhoria_satisfacao,
+  ].some(m => m && m.trim());
 
   return (
     <div className="resposta-card">
@@ -88,20 +88,46 @@ const RespostaCard = ({ r }) => {
       <div className="resposta-nota" style={{ backgroundColor: cor }}>{r.indicaria_amigo}</div>
 
       <div className="resposta-info">
-        {/* Linha de pills com empresa e critérios */}
+
+        {/* === PILLS DE CRITÉRIOS COM NOTA === */}
         <div className="resposta-notas-detail">
-          {r.empresa                     && <span className="nota-pill">🏢 {r.empresa}</span>}
-          {r.avaliacao_agilidade         && <span className="nota-pill">⚡ Agilidade: {mapa[r.avaliacao_agilidade]}</span>}
-          {r.avaliacao_conhecimento_tecnico && <span className="nota-pill">🔧 Conhec. Técnico: {mapa[r.avaliacao_conhecimento_tecnico]}</span>}
-          {r.avaliacao_qualidade         && <span className="nota-pill">✨ Qualidade: {mapa[r.avaliacao_qualidade]}</span>}
-          {r.avaliacao_pontualidade      && <span className="nota-pill">⏱ Pontualidade: {mapa[r.avaliacao_pontualidade]}</span>}
-          {r.avaliacao_satisfacao        && <span className="nota-pill">😊 Satisfação: {mapa[r.avaliacao_satisfacao]}</span>}
+          {r.empresa                        && <span className="nota-pill">🏢 {r.empresa}</span>}
+          {r.avaliacao_agilidade            && <span className="nota-pill">⚡ Agilidade: {r.avaliacao_agilidade}/10</span>}
+          {r.avaliacao_conhecimento_tecnico && <span className="nota-pill">🔧 Conhec. Técnico: {r.avaliacao_conhecimento_tecnico}/10</span>}
+          {r.avaliacao_qualidade            && <span className="nota-pill">✨ Qualidade: {r.avaliacao_qualidade}/10</span>}
+          {r.avaliacao_pontualidade         && <span className="nota-pill">⏱ Pontualidade: {r.avaliacao_pontualidade}/10</span>}
+          {r.avaliacao_satisfacao           && <span className="nota-pill">😊 Satisfação: {r.avaliacao_satisfacao}/10</span>}
         </div>
 
-        {/* Feedback textual (se existir) */}
-        {r.feedback && (
-          <div className={`resposta-feedback ${r.indicaria_amigo < 7 ? 'neg' : ''}`}>
-            {r.indicaria_amigo >= 7 ? '💬' : '⚠️'} {r.feedback}
+        {/* === FEEDBACKS DE MELHORIA POR CRITÉRIO ===
+            Só aparece se o cliente digitou algo (nota < 8 em algum critério) */}
+        {temMelhoria && (
+          <div style={{ marginTop: 8 }}>
+            {r.melhoria_agilidade && (
+              <div className="resposta-feedback neg">
+                ⚡ <strong>Agilidade:</strong> {r.melhoria_agilidade}
+              </div>
+            )}
+            {r.melhoria_conhecimento_tecnico && (
+              <div className="resposta-feedback neg">
+                🔧 <strong>Conhecimento Técnico:</strong> {r.melhoria_conhecimento_tecnico}
+              </div>
+            )}
+            {r.melhoria_qualidade && (
+              <div className="resposta-feedback neg">
+                ✨ <strong>Qualidade:</strong> {r.melhoria_qualidade}
+              </div>
+            )}
+            {r.melhoria_pontualidade && (
+              <div className="resposta-feedback neg">
+                ⏱ <strong>Pontualidade:</strong> {r.melhoria_pontualidade}
+              </div>
+            )}
+            {r.melhoria_satisfacao && (
+              <div className="resposta-feedback neg">
+                😊 <strong>Satisfação:</strong> {r.melhoria_satisfacao}
+              </div>
+            )}
           </div>
         )}
 
@@ -119,30 +145,23 @@ const RespostaCard = ({ r }) => {
 // COMPONENTE PRINCIPAL: DashboardEngenharia
 // ─────────────────────────────────────────────────────────────────────────────
 const DashboardEngenharia = () => {
-  // === ESTADOS ===
-  const [stats, setStats]         = useState(null);     // Estatísticas gerais (NPS, médias, etc.)
-  const [respostas, setRespostas] = useState([]);       // Lista de respostas individuais
-  const [loading, setLoading]     = useState(true);     // Controla o spinner de carregamento
-  const [erro, setErro]           = useState(null);     // Mensagem de erro (se houver)
-  const [aba, setAba]             = useState('todos');  // Aba ativa nas respostas individuais
+  const [stats, setStats]         = useState(null);
+  const [respostas, setRespostas] = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [erro, setErro]           = useState(null);
+  const [aba, setAba]             = useState('todos');
 
   const { logout } = useAuth();
   const navigate   = useNavigate();
 
-  // === FUNÇÃO: Carrega os dados da API ===
   const carregar = async () => {
     try {
       setLoading(true);
       setErro(null);
-
-      // Faz duas requisições ao mesmo tempo (mais rápido que uma por vez):
-      // 1. /api/engenharia/stats    → estatísticas e gráficos
-      // 2. /api/engenharia/respostas → lista de respostas individuais
       const [sRes, rRes] = await Promise.all([
         api.get('/engenharia/stats'),
         api.get('/engenharia/respostas'),
       ]);
-
       setStats(sRes.data);
       setRespostas(rRes.data);
     } catch (e) {
@@ -152,14 +171,12 @@ const DashboardEngenharia = () => {
     }
   };
 
-  // === EFEITO: Carrega ao abrir a página e a cada 30 segundos ===
   useEffect(() => {
     carregar();
-    const t = setInterval(carregar, 30000); // Auto-atualiza a cada 30s
-    return () => clearInterval(t);          // Limpa o intervalo ao sair da página
+    const t = setInterval(carregar, 30000);
+    return () => clearInterval(t);
   }, []);
 
-  // === TELA DE CARREGAMENTO ===
   if (loading && !stats) return (
     <div className="loading-screen">
       <div className="spinner"></div>
@@ -167,7 +184,6 @@ const DashboardEngenharia = () => {
     </div>
   );
 
-  // === TELA DE ERRO ===
   if (erro) return (
     <div className="error-screen">
       <h2>{erro}</h2>
@@ -175,37 +191,33 @@ const DashboardEngenharia = () => {
     </div>
   );
 
-  // === DADOS CALCULADOS ===
-  const nps = stats?.nps_score || 0;
+  const nps        = stats?.nps_score || 0;
+  const promotores = respostas.filter(r => r.indicaria_amigo >= 9);
+  const neutros    = respostas.filter(r => r.indicaria_amigo >= 7 && r.indicaria_amigo <= 8);
+  const detratores = respostas.filter(r => r.indicaria_amigo <= 6);
 
-  // Separa as respostas por categoria para as abas
-  const promotores  = respostas.filter(r => r.indicaria_amigo >= 9);
-  const neutros     = respostas.filter(r => r.indicaria_amigo >= 7 && r.indicaria_amigo <= 8);
-  const detratores  = respostas.filter(r => r.indicaria_amigo <= 6);
-  const comFeedback = respostas.filter(r => r.feedback?.trim());
+  // === ABA FEEDBACKS ===
+  // Conta respostas que têm pelo menos um campo de melhoria preenchido
+  const comFeedback = respostas.filter(r =>
+    r.melhoria_agilidade?.trim()            ||
+    r.melhoria_conhecimento_tecnico?.trim() ||
+    r.melhoria_qualidade?.trim()            ||
+    r.melhoria_pontualidade?.trim()         ||
+    r.melhoria_satisfacao?.trim()
+  );
 
-  // Mapeia qual aba está ativa para mostrar as respostas certas
   const abaAtiva = {
-    todos:      respostas,
-    promotores,
-    neutros,
-    detratores,
-    feedbacks:  comFeedback,
+    todos: respostas, promotores, neutros, detratores, feedbacks: comFeedback,
   }[aba] || respostas;
 
-  // === CRITÉRIOS DE ENGENHARIA ===
-  // "conhecimento_tecnico" no lugar de "beneficio" (que é de publicidade)
   const criterios = [
     { key: 'agilidade',            titulo: '⚡ Agilidade no Atendimento'      },
-    { key: 'conhecimento_tecnico', titulo: '🔧 Conhecimento Técnico'           }, // ← EXCLUSIVO ENGENHARIA
+    { key: 'conhecimento_tecnico', titulo: '🔧 Conhecimento Técnico'           },
     { key: 'qualidade',            titulo: '✨ Qualidade do Trabalho Entregue' },
     { key: 'pontualidade',         titulo: '⏱ Pontualidade das Entregas'       },
     { key: 'satisfacao',           titulo: '😊 Satisfação Geral'               },
   ];
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // RENDERIZAÇÃO
-  // ─────────────────────────────────────────────────────────────────────────
   return (
     <div className="dashboard">
 
@@ -219,15 +231,12 @@ const DashboardEngenharia = () => {
             <p>Pesquisa de satisfação · {stats?.total_respostas || 0} respondentes</p>
           </div>
           <div className="header-actions">
-            {/* Botão para voltar ao dashboard de Cursos */}
             <button onClick={() => navigate('/')} className="btn-refresh">
               <ArrowLeft size={16} /> Cursos
             </button>
-            {/* Botão para atualizar os dados manualmente */}
             <button onClick={carregar} className="btn-refresh" disabled={loading}>
               <RefreshCw size={16} className={loading ? 'spinning' : ''} /> Atualizar
             </button>
-            {/* Botão de logout */}
             <button onClick={() => { logout(); navigate('/login'); }} className="btn-logout">
               <LogOut size={16} /> Sair
             </button>
@@ -281,7 +290,7 @@ const DashboardEngenharia = () => {
           </div>
         </section>
 
-        {/* === MÉDIAS POR CRITÉRIO (barras de progresso) === */}
+        {/* === MÉDIAS POR CRITÉRIO === */}
         {stats?.medias && (
           <section className="metrics-section">
             <h2 className="section-title">Médias por Critério</h2>
@@ -290,9 +299,8 @@ const DashboardEngenharia = () => {
                 {criterios.map(c => {
                   const val = stats.medias[c.key];
                   if (!val) return null;
-                  // Converte a média (1-5) para porcentagem (0-100%)
-                  const pct = (val / 5) * 100;
-                  // Cor da barra conforme o percentual
+                  // Escala agora é 1-10
+                  const pct = (val / 10) * 100;
                   const cor = pct >= 80 ? '#10B981' : pct >= 60 ? '#3B82F6' : '#F59E0B';
                   return (
                     <div key={c.key} className="rating-row">
@@ -300,7 +308,7 @@ const DashboardEngenharia = () => {
                       <div className="rating-bar-bg">
                         <div className="rating-bar-fill" style={{ width:`${pct}%`, backgroundColor: cor }}></div>
                       </div>
-                      <span className="rating-val">{notaTexto(val)} ({val})</span>
+                      <span className="rating-val">{notaTexto(val)} ({val}/10)</span>
                     </div>
                   );
                 })}
@@ -309,7 +317,7 @@ const DashboardEngenharia = () => {
           </section>
         )}
 
-        {/* === DISTRIBUIÇÃO DAS NOTAS NPS (0 a 10) === */}
+        {/* === DISTRIBUIÇÃO DAS NOTAS NPS === */}
         {stats?.distribuicao && (
           <section className="metrics-section">
             <h2 className="section-title">Distribuição de Notas NPS</h2>
@@ -330,23 +338,19 @@ const DashboardEngenharia = () => {
         {/* === RESPOSTAS INDIVIDUAIS COM ABAS === */}
         <section className="metrics-section">
           <h2 className="section-title">Respostas Individuais</h2>
-
-          {/* Abas para filtrar as respostas */}
           <div className="tabs">
             {[
               { key:'todos',      label:`📋 Todos (${respostas.length})`        },
               { key:'promotores', label:`👍 Promotores (${promotores.length})`  },
               { key:'neutros',    label:`😐 Neutros (${neutros.length})`        },
               { key:'detratores', label:`👎 Detratores (${detratores.length})`  },
-              { key:'feedbacks',  label:`💬 Feedbacks (${comFeedback.length})`  },
+              { key:'feedbacks',  label:`💬 Melhorias (${comFeedback.length})`  },
             ].map(t => (
               <button key={t.key} className={aba === t.key ? 'active' : ''} onClick={() => setAba(t.key)}>
                 {t.label}
               </button>
             ))}
           </div>
-
-          {/* Lista de respostas da aba ativa */}
           <div className="tab-content">
             {abaAtiva.map(r => <RespostaCard key={r.id} r={r} />)}
             {abaAtiva.length === 0 && <p className="empty-state">Nenhuma resposta nesta categoria.</p>}

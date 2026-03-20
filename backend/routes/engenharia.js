@@ -1,33 +1,20 @@
 // === ROTA: engenharia.js ===
 // Arquivo: backend/routes/engenharia.js
 //
-// O que este arquivo faz:
-// Define todas as rotas da API para o dashboard de Engenharia.
-// Funciona exatamente igual ao comunicacao.js, mas com a tabela
-// "respostas_engenharia" e o critério "conhecimento_tecnico"
-// no lugar de "beneficio".
-//
-// Rotas disponíveis:
-//   GET  /api/engenharia/stats            → Estatísticas gerais (NPS, médias, gráficos)
-//   GET  /api/engenharia/respostas        → Lista todas as respostas
-//   POST /api/engenharia/webhook/typebot  → Recebe dados do Typebot
+// O que mudou nesta versão:
+// O webhook agora recebe e salva os 5 campos de melhoria por critério:
+//   melhoria_agilidade, melhoria_conhecimento_tecnico, melhoria_qualidade,
+//   melhoria_pontualidade, melhoria_satisfacao
+// Esses campos chegam preenchidos quando o cliente deu nota < 8 no critério.
+// Quando a nota foi >= 8, o campo chega vazio e é salvo como null.
 
 const express = require('express');
 const router  = express.Router();
 const { query, run } = require('../database');
 
-// === FUNÇÃO: Converte texto para número ===
-// O Typebot envia as avaliações como texto ("Excelente", "Bom", etc.)
-// Esta função converte para número (5, 4, 3, 2, 1) para salvar no banco.
-// Também aceita se já vier como número (caso o Typebot envie assim).
-// Exemplos:
-//   "Excelente" → 5
-//   "Bom"       → 4
-//   "Regular"   → 3
-//   "Ruim"      → 2
-//   "Péssimo"   → 1
-//   5           → 5  (já é número, retorna direto)
-//   ""          → null (vazio, retorna nulo)
+// === FUNÇÃO: Converte texto ou número para nota numérica ===
+// Agora o Typebot envia as avaliações como número de 1 a 10 diretamente.
+// Esta função aceita tanto número quanto texto por compatibilidade.
 const textoParaNota = (v) => {
   if (v === null || v === undefined || v === '') return null;
   const n = parseFloat(v);
@@ -38,58 +25,37 @@ const textoParaNota = (v) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/engenharia/stats
-// Retorna todas as estatísticas para o dashboard:
-//   - total de respostas
-//   - promotores, neutros, detratores
-//   - score NPS calculado
-//   - distribuição das notas (0 a 10)
-//   - médias de cada critério
-//   - dados para os gráficos de barras por critério
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/stats', async (req, res) => {
   try {
-    // Busca todas as respostas da tabela de engenharia
     const rows  = await query('SELECT * FROM respostas_engenharia');
     const total = rows.length;
 
-    // === CÁLCULO NPS ===
-    // Promotores: nota 9 ou 10
-    // Neutros: nota 7 ou 8
-    // Detratores: nota 0 a 6
-    // Fórmula: ((Promotores - Detratores) / Total) × 100
     const promotores = rows.filter(r => r.indicaria_amigo >= 9).length;
     const neutros    = rows.filter(r => r.indicaria_amigo >= 7 && r.indicaria_amigo <= 8).length;
     const detratores = rows.filter(r => r.indicaria_amigo <= 6).length;
     const nps        = total > 0 ? ((promotores - detratores) / total) * 100 : 0;
 
-    // === FUNÇÃO: Calcula a média de um campo numérico ===
-    // Ignora valores nulos para não distorcer a média
     const media = (campo) => {
       const vals = rows.filter(r => r[campo] != null).map(r => r[campo]);
       return vals.length ? +(vals.reduce((a,b) => a+b, 0) / vals.length).toFixed(2) : null;
     };
 
-    // === DISTRIBUIÇÃO DE NOTAS NPS (0 a 10) ===
-    // Cria um array com 11 posições (notas 0 até 10)
-    // Cada posição tem a nota e quantas pessoas deram aquela nota
     const distribuicao = Array.from({ length: 11 }, (_, i) => ({
       nota:  i,
       count: rows.filter(r => r.indicaria_amigo === i).length
     }));
 
-    // === FUNÇÃO: Conta respostas de texto por critério ===
-    // Usada para gerar os gráficos de barras coloridas
-    // Retorna array: [{ label: 'Excelente', count: 10 }, { label: 'Bom', count: 5 }, ...]
-    const contarTexto = (campo) => {
-      const labels = ['Excelente','Bom','Regular','Ruim','Péssimo'];
-      const mapa   = { 5:'Excelente', 4:'Bom', 3:'Regular', 2:'Ruim', 1:'Péssimo' };
-      return labels.map(label => ({
-        label,
-        count: rows.filter(r => mapa[r[campo]] === label).length
-      }));
-    };
+    // === AGRUPA NOTAS DE 1-10 EM FAIXAS PARA OS GRÁFICOS ===
+    // 9-10 = Excelente, 7-8 = Bom, 5-6 = Regular, 3-4 = Ruim, 1-2 = Péssimo
+    const contarNotas = (campo) => [
+      { label: 'Excelente', count: rows.filter(r => r[campo] >= 9).length },
+      { label: 'Bom',       count: rows.filter(r => r[campo] >= 7 && r[campo] <= 8).length },
+      { label: 'Regular',   count: rows.filter(r => r[campo] >= 5 && r[campo] <= 6).length },
+      { label: 'Ruim',      count: rows.filter(r => r[campo] >= 3 && r[campo] <= 4).length },
+      { label: 'Péssimo',   count: rows.filter(r => r[campo] >= 1 && r[campo] <= 2).length },
+    ];
 
-    // Retorna todos os dados calculados para o frontend
     res.json({
       total_respostas: total,
       promotores,
@@ -99,17 +65,17 @@ router.get('/stats', async (req, res) => {
       distribuicao,
       medias: {
         agilidade:            media('avaliacao_agilidade'),
-        conhecimento_tecnico: media('avaliacao_conhecimento_tecnico'), // ← EXCLUSIVO ENGENHARIA
+        conhecimento_tecnico: media('avaliacao_conhecimento_tecnico'),
         qualidade:            media('avaliacao_qualidade'),
         pontualidade:         media('avaliacao_pontualidade'),
         satisfacao:           media('avaliacao_satisfacao'),
       },
       graficos: {
-        agilidade:            contarTexto('avaliacao_agilidade'),
-        conhecimento_tecnico: contarTexto('avaliacao_conhecimento_tecnico'), // ← EXCLUSIVO ENGENHARIA
-        qualidade:            contarTexto('avaliacao_qualidade'),
-        pontualidade:         contarTexto('avaliacao_pontualidade'),
-        satisfacao:           contarTexto('avaliacao_satisfacao'),
+        agilidade:            contarNotas('avaliacao_agilidade'),
+        conhecimento_tecnico: contarNotas('avaliacao_conhecimento_tecnico'),
+        qualidade:            contarNotas('avaliacao_qualidade'),
+        pontualidade:         contarNotas('avaliacao_pontualidade'),
+        satisfacao:           contarNotas('avaliacao_satisfacao'),
       }
     });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -117,9 +83,6 @@ router.get('/stats', async (req, res) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/engenharia/respostas
-// Retorna a lista de respostas individuais.
-// Suporta paginação via query params: ?limit=500&offset=0
-// Ordenadas da mais recente para a mais antiga.
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/respostas', async (req, res) => {
   try {
@@ -134,20 +97,23 @@ router.get('/respostas', async (req, res) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/engenharia/webhook/typebot
-// Recebe os dados enviados pelo Typebot quando alguém termina a pesquisa.
 //
 // Payload esperado (enviado pelo Typebot):
 // {
-//   "nome":                        "Nome do respondente",
-//   "e-mail":                      "email@empresa.com",
-//   "empresa":                     "Nome da Empresa",
-//   "avaliacao_agilidade":         "Excelente",
-//   "avaliacao_conhecimento_tecnico": "Bom",
-//   "avaliacao_qualidade":         "Excelente",
-//   "avaliacao_pontualidade":      "Bom",
-//   "avaliacao_satisfacao":        "Excelente",
-//   "indicaria_amigo":             9,
-//   "feedback":                    "Comentário opcional..."
+//   "nome":                           "Nome do respondente",
+//   "e-mail":                         "email@empresa.com",
+//   "empresa":                        "Nome da Empresa",
+//   "avaliacao_agilidade":            8,
+//   "avaliacao_conhecimento_tecnico": 9,
+//   "avaliacao_qualidade":            7,
+//   "avaliacao_pontualidade":         10,
+//   "avaliacao_satisfacao":           8,
+//   "melhoria_agilidade":             "Poderia ser mais rápido",
+//   "melhoria_conhecimento_tecnico":  "",
+//   "melhoria_qualidade":             "Mais atenção aos detalhes",
+//   "melhoria_pontualidade":          "",
+//   "melhoria_satisfacao":            "",
+//   "indicaria_amigo":                9
 // }
 // ─────────────────────────────────────────────────────────────────────────────
 router.post('/webhook/typebot', async (req, res) => {
@@ -156,43 +122,48 @@ router.post('/webhook/typebot', async (req, res) => {
       nome, empresa,
       avaliacao_agilidade, avaliacao_conhecimento_tecnico,
       avaliacao_qualidade, avaliacao_pontualidade, avaliacao_satisfacao,
-      indicaria_amigo, feedback
+      melhoria_agilidade, melhoria_conhecimento_tecnico,
+      melhoria_qualidade, melhoria_pontualidade, melhoria_satisfacao,
+      indicaria_amigo
     } = req.body;
 
-    // Aceita tanto "e-mail" (como o Typebot de publicidade envia) quanto "email"
     const email = req.body['e-mail'] || req.body['email'] || null;
 
-    // === VALIDAÇÃO ===
-    // O campo NPS é obrigatório — sem ele não dá para calcular o score
     if (indicaria_amigo == null || indicaria_amigo === '') {
       return res.status(400).json({ error: 'Campo "indicaria_amigo" é obrigatório.' });
     }
 
-    // === DATA E HORA ===
-    // Gera a data atual no formato "2026-03-18 14:30:00"
     const agora    = new Date();
     const data_str = agora.toISOString().replace('T', ' ').substring(0, 19);
 
-    // === INSERÇÃO NO BANCO ===
-    // Salva todos os dados na tabela respostas_engenharia
+    // === LIMPA STRINGS VAZIAS PARA NULL ===
+    // Campos de melhoria chegam vazios ("") quando nota >= 8
+    const limpar = (v) => (v && String(v).trim() !== '' ? String(v).trim() : null);
+
     const result = await run(`
       INSERT INTO respostas_engenharia
         (nome, email, empresa,
          avaliacao_agilidade, avaliacao_conhecimento_tecnico, avaliacao_qualidade,
          avaliacao_pontualidade, avaliacao_satisfacao,
-         indicaria_amigo, feedback, data_resposta, ano)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+         melhoria_agilidade, melhoria_conhecimento_tecnico, melhoria_qualidade,
+         melhoria_pontualidade, melhoria_satisfacao,
+         indicaria_amigo, data_resposta, ano)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     `, [
-      nome    || null,
-      email   || null,
-      empresa || null,
+      limpar(nome),
+      limpar(email),
+      limpar(empresa),
       textoParaNota(avaliacao_agilidade),
-      textoParaNota(avaliacao_conhecimento_tecnico), // ← EXCLUSIVO ENGENHARIA
+      textoParaNota(avaliacao_conhecimento_tecnico),
       textoParaNota(avaliacao_qualidade),
       textoParaNota(avaliacao_pontualidade),
       textoParaNota(avaliacao_satisfacao),
+      limpar(melhoria_agilidade),
+      limpar(melhoria_conhecimento_tecnico),
+      limpar(melhoria_qualidade),
+      limpar(melhoria_pontualidade),
+      limpar(melhoria_satisfacao),
       parseInt(indicaria_amigo),
-      feedback || null,
       data_str,
       agora.getFullYear()
     ]);
