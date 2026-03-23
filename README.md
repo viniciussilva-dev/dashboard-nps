@@ -9,7 +9,8 @@ Sistema de dashboard para visualização em tempo real de pesquisas de satisfaç
 - ✅ Gráficos de distribuição de notas
 - ✅ Feedbacks positivos e negativos
 - ✅ Detalhamento de respostas individuais
-- ✅ Dashboard separado para Publicidade e Comunicação
+- ✅ Dashboard separado para Publicidade
+- ✅ Dashboard separado para Cursos do Canal Solar
 - ✅ Dashboard separado para Engenharia
 - ✅ Gráficos de avaliação por critério (Agilidade, Pontualidade, Qualidade, Custo-Benefício, Satisfação)
 - ✅ Gráficos de avaliação por critério de Engenharia (Agilidade, Conhecimento Técnico, Qualidade, Pontualidade, Satisfação)
