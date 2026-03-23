@@ -16,6 +16,7 @@ import DashboardPublicidade from './pages/DashboardPublicidade';
 import DashboardEngenharia from './pages/DashboardEngenharia';   // ← NOVO
 import CookieBanner from './components/CookieBanner';
 import './index.css';
+import HomePage from './pages/HomePage';
 
 function App() {
   return (
@@ -27,7 +28,8 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
 
             {/* Dashboard principal de Cursos — protegida */}
-            <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+            <Route path="/" element={<PrivateRoute><HomePage /></PrivateRoute>} />
+            <Route path="/cursos" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
 
             {/* Detalhes de um curso específico — protegida */}
             <Route path="/curso/:nomeCurso" element={<PrivateRoute><CursoDetalhes /></PrivateRoute>} />

@@ -11,7 +11,7 @@ import { npsAPI } from '../services/api';
 import NPSGauge from '../components/NPSGauge';
 import CursoCard from '../components/CursoCard';
 import FeedbackCard from '../components/FeedbackCard';
-import { RefreshCw, LogOut } from 'lucide-react';
+import { RefreshCw, LogOut, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -99,7 +99,7 @@ const Dashboard = () => {
 
       {/* === CABEÇALHO === */}
       <header className="dashboard-header">
-        <div className="header-content">
+        <div className="header-content">     
           <img src="/logo-canalsolar.webp" alt="Canal Solar" className="header-logo" />
           <div className="header-divider"></div>
           <div className="header-info">
@@ -111,32 +111,24 @@ const Dashboard = () => {
               CORREÇÃO: anteriormente o botão Publicidade estava DENTRO
               do botão Atualizar (HTML inválido). Agora todos estão separados
               corretamente como irmãos dentro de header-actions. */}
-          <div className="header-actions">
+          
+         <div className="header-actions">  
 
-            {/* Navega para o dashboard de Publicidade */}
-            <button onClick={() => navigate('/publicidade')} className="btn-refresh">
-              📢 Publicidade
-            </button>
+  <button onClick={() => navigate('/')} className="btn-refresh">
+    <ArrowLeft size={16} /> Início
+  </button>
 
-            {/* Navega para o dashboard de Engenharia ← NOVO */}
-            <button onClick={() => navigate('/engenharia')} className="btn-refresh">
-              🔧 Engenharia
-            </button>
+  <button onClick={fetchData} className="btn-refresh" disabled={loading}>
+    <RefreshCw size={16} className={loading ? 'spinning' : ''} />
+    Atualizar
+  </button>
 
-            {/* Atualiza os dados manualmente */}
-            <button onClick={fetchData} className="btn-refresh" disabled={loading}>
-              <RefreshCw size={16} className={loading ? 'spinning' : ''} />
-              Atualizar
-            </button>
-
-            {/* Faz logout e volta para a tela de login */}
-            <button onClick={handleLogout} className="btn-logout">
-              <LogOut size={16} />
-              Sair
-            </button>
-
-          </div>
-        </div>
+  <button onClick={handleLogout} className="btn-logout">
+    <LogOut size={16} />
+    Sair
+  </button>
+  </div>
+</div>  
       </header>
 
       <main className="dashboard-main">

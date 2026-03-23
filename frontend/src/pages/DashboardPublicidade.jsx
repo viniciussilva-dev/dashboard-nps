@@ -168,7 +168,7 @@ const DashboardPublicidade = () => {
           </div>
           <div className="header-actions">
             <button onClick={() => navigate('/')} className="btn-refresh">
-              <ArrowLeft size={16} /> Cursos
+              <ArrowLeft size={16} /> Inicio
             </button>
             <button onClick={carregar} className="btn-refresh" disabled={loading}>
               <RefreshCw size={16} className={loading ? 'spinning' : ''} /> Atualizar
