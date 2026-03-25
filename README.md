@@ -193,8 +193,7 @@ Frontend rodando em `http://localhost:5173`
 
 ### 5. Acesse o sistema
 - URL: `http://localhost:5173`
-- Usuário: `admin`
-- Senha: `canalsolar2026`
+- As credenciais de acesso são configuradas diretamente no arquivo `frontend/src/AuthContext.jsx`
 
 ---
 
