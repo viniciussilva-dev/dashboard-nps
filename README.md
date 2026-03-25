@@ -1,253 +1,256 @@
-# 🌞 Dashboard NPS - Canal Solar
+# 🌞 Dashboard NPS — Canal Solar
 
-Sistema de dashboard para visualização em tempo real de pesquisas de satisfação (NPS) dos cursos, da área de Publicidade e da área de Engenharia do Canal Solar.
+> Sistema completo de dashboard para visualização em tempo real de pesquisas de satisfação (NPS), desenvolvido para o **Canal Solar** — maior portal de energia solar do Brasil.
 
-## 📊 Funcionalidades
+![Node.js](https://img.shields.io/badge/Node.js-22_LTS-339933?style=flat&logo=node.js&logoColor=white)
+![React](https://img.shields.io/badge/React-18-61DAFB?style=flat&logo=react&logoColor=black)
+![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=flat&logo=mysql&logoColor=white)
+![Express](https://img.shields.io/badge/Express-4.18-000000?style=flat&logo=express&logoColor=white)
 
-- ✅ Visualização de NPS geral (velocímetro)
-- ✅ NPS por curso individual
-- ✅ Gráficos de distribuição de notas
-- ✅ Feedbacks positivos e negativos
-- ✅ Detalhamento de respostas individuais
-- ✅ Dashboard separado para Publicidade
-- ✅ Dashboard separado para Cursos do Canal Solar
-- ✅ Dashboard separado para Engenharia
-- ✅ Gráficos de avaliação por critério (Agilidade, Pontualidade, Qualidade, Custo-Benefício, Satisfação)
-- ✅ Gráficos de avaliação por critério de Engenharia (Agilidade, Conhecimento Técnico, Qualidade, Pontualidade, Satisfação)
-- ✅ Feedbacks de melhoria por critério (quando nota < 8 no Typebot de Engenharia)
-- ✅ Webhook para integração com Typebot (Cursos, Comunicação e Engenharia)
-- ✅ Auto-atualização a cada 30 segundos
-- ✅ Sistema de login com autenticação por sessão
+---
 
-## 🚀 Tecnologias Utilizadas
+## 💡 Sobre o Projeto
+
+O Canal Solar precisava de uma solução para centralizar e visualizar em tempo real as pesquisas de satisfação (NPS) enviadas por alunos dos cursos e clientes das áreas de Publicidade e Engenharia.
+
+A solução integra um chatbot (Typebot) com um dashboard completo — quando o cliente termina a pesquisa no chatbot, os dados chegam automaticamente via webhook e aparecem no dashboard em até 30 segundos.
+
+---
+
+## ✅ Funcionalidades
+
+### Geral
+- Sistema de login com autenticação por sessão
+- Tela de seleção de módulos após login
+- Auto-atualização dos dados a cada 30 segundos
+- Velocímetro NPS com zonas de qualidade
+
+### Módulo Cursos
+- NPS geral de todos os cursos
+- NPS individual por curso com detalhamento
+- Gráfico de distribuição de notas
+- Feedbacks positivos e negativos separados
+- Detalhamento de respostas individuais com abas (Promotores, Neutros, Detratores)
+
+### Módulo Publicidade
+- NPS geral da área de Publicidade
+- Gráficos de avaliação por critério (Agilidade, Pontualidade, Qualidade, Custo-Benefício, Satisfação)
+- Médias por critério com barras de progresso
+- Respostas individuais filtradas por categoria
+
+### Módulo Engenharia
+- NPS geral da área de Engenharia
+- Gráficos de avaliação por critério (Agilidade, Conhecimento Técnico, Qualidade, Pontualidade, Satisfação)
+- Feedbacks de melhoria por critério (coletados quando nota < 8)
+- Respostas individuais com aba de Melhorias
+
+---
+
+## 🚀 Tecnologias
 
 ### Backend
-- **Node.js 22 LTS** - Runtime JavaScript
-- **Express** - Framework web
-- **MySQL** - Banco de dados relacional
-- **Knex.js** - Query builder e migrations
-- **CORS** - Segurança de requisições
+| Tecnologia | Uso |
+|---|---|
+| **Node.js 22 LTS** | Runtime JavaScript no servidor |
+| **Express 4** | Framework web para criação da API REST |
+| **MySQL 8** | Banco de dados relacional |
+| **Knex.js** | Query builder e gerenciamento de migrations |
+| **dotenv** | Gerenciamento de variáveis de ambiente |
+| **CORS** | Controle de acesso entre domínios |
 
 ### Frontend
-- **React 18** - Biblioteca de interface
-- **Vite** - Build tool rápido
-- **Axios** - Cliente HTTP
-- **Recharts** - Gráficos interativos
-- **Lucide React** - Ícones
-- **React Router DOM** - Navegação
+| Tecnologia | Uso |
+|---|---|
+| **React 18** | Biblioteca de interface de usuário |
+| **Vite 6** | Build tool e servidor de desenvolvimento |
+| **React Router DOM 7** | Navegação entre páginas |
+| **Axios** | Cliente HTTP para consumo da API |
+| **Recharts** | Gráficos interativos |
+| **Lucide React** | Biblioteca de ícones |
 
-## 📦 Instalação Local
+---
 
-### Pré-requisitos
-- Node.js 20 LTS ou superior
-- MySQL 8.0 ou superior
-- Python 3.x (apenas para scripts de importação)
-
-### Banco de Dados
-```bash
-# Cria o banco de dados no MySQL
-mysql -u root -p
-CREATE DATABASE canalsolar_nps CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-exit
-```
-
-### Backend
-```bash
-cd backend
-npm install
-
-# Configura as variáveis de ambiente
-cp .env.example .env
-# Edite o .env com suas credenciais do MySQL
-
-# Roda as migrations (cria as tabelas automaticamente)
-npx knex migrate:latest
-
-# Inicia o servidor
-npm run dev
-```
-
-O backend estará rodando em `http://localhost:3001`
-
-### Frontend
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-O frontend estará rodando em `http://localhost:5173`
-
-## 🌐 Deploy em Produção (Ploi)
-
-### Backend
-
-1. Conectar repositório GitHub ao Ploi
-2. Criar banco MySQL no painel do Ploi
-3. Configurar variáveis de ambiente no Ploi:
-   - `PORT` = `3001`
-   - `NODE_ENV` = `production`
-   - `DB_HOST` = host do banco
-   - `DB_PORT` = `3306`
-   - `DB_USER` = usuário do banco
-   - `DB_PASSWORD` = senha do banco
-   - `DB_NAME` = nome do banco
-4. O comando de start já roda as migrations automaticamente:
-   ```
-   npx knex migrate:latest && node server.js
-   ```
-
-### Frontend (Vercel/Netlify)
-
-1. Conectar repositório GitHub
-2. Configurar:
-   - **Root Directory:** `frontend`
-   - **Build Command:** `npm run build`
-   - **Output Directory:** `dist`
-3. Adicionar variável de ambiente:
-   - `VITE_API_URL` = `https://npsapi.canalsolar.com.br/api`
-
-## 🔗 Integração com Typebot
-
-### Webhook — Cursos NPS
-```
-POST /api/nps/webhook/typebot
-```
-```json
-{
-  "curso": "Nome do Curso",
-  "avaliacao_geral": 5,
-  "nivel_professores": 5,
-  "material_didatico": 4,
-  "organizacao_atendimento": 5,
-  "faria_outro_curso": 5,
-  "indicaria_amigo": 5,
-  "feedback": "Comentário do aluno..."
-}
-```
-
-### Webhook — Publicidade e Comunicação
-```
-POST /api/comunicacao/webhook/typebot
-```
-```json
-{
-  "nome": "Nome do respondente",
-  "e-mail": "email@empresa.com",
-  "empresa": "Nome da Empresa",
-  "avaliacao_agilidade": "Excelente",
-  "avaliacao_pontualidade": "Bom",
-  "avaliacao_qualidade": "Excelente",
-  "avaliacao_beneficio": "Bom",
-  "avaliacao_satisfacao": "Excelente",
-  "indicaria_amigo": 9,
-  "feedback": "Comentário opcional..."
-}
-```
-
-### Webhook — Engenharia
-```
-POST /api/engenharia/webhook/typebot
-```
-```json
-{
-  "nome": "Nome do respondente",
-  "e-mail": "email@empresa.com",
-  "empresa": "Nome da Empresa",
-  "avaliacao_agilidade": 8,
-  "avaliacao_conhecimento_tecnico": 9,
-  "avaliacao_qualidade": 7,
-  "avaliacao_pontualidade": 10,
-  "avaliacao_satisfacao": 8,
-  "melhoria_agilidade": "Texto digitado se nota < 8, senão vazio",
-  "melhoria_conhecimento_tecnico": "",
-  "melhoria_qualidade": "Texto digitado se nota < 8, senão vazio",
-  "melhoria_pontualidade": "",
-  "melhoria_satisfacao": "",
-  "indicaria_amigo": 9
-}
-```
-
-> ⚠️ No Typebot de Engenharia, as avaliações de critério são notas de **1 a 10** (não texto). Quando o cliente dá nota menor que 8 em um critério, o Typebot exibe a pergunta "Pode nos contar o que poderia melhorar?" e salva a resposta na variável `melhoria_*` correspondente.
-
-## 📊 Dados
-
-- **Banco de dados:** MySQL (produção) / MySQL local (desenvolvimento)
-- **Tabelas:** `respostas_nps` (cursos), `respostas_comunicacao` (publicidade) e `respostas_engenharia` (engenharia)
-- **Respostas NPS cursos:** 654 respostas
-- **Respostas Publicidade:** 88 respostas
-- **Respostas Engenharia:** 10 respostas (importadas do formulário histórico)
-- **NPS Cursos:** 69 (Zona de Qualidade 🎯)
-- **NPS Publicidade:** 77 (Zona de Excelência ⭐)
-
-## 🎨 Paleta de Cores
-
-- **Azul escuro:** `#0a1628` (header)
-- **Vermelho Canal Solar:** `#E8192C` (destaque)
-- **Amarelo sol:** `#F59E0B` (logo)
-- **Verde:** `#10B981` (promotores)
-- **Azul:** `#3B82F6` (neutros)
-- **Vermelho:** `#EF4444` (detratores)
-
-## 📝 Estrutura do Projeto
+## 📁 Estrutura do Projeto
 
 ```
 canalsolar-nps/
+│
 ├── backend/
 │   ├── migrations/
-│   │   ├── 20260310_01_create_respostas_nps.js
-│   │   ├── 20260310_02_create_respostas_comunicacao.js
-│   │   ├── 20260318_03_create_respostas_engenharia.js
-│   │   └── 20260320_04_add_melhorias_engenharia.js
+│   │   ├── 20260310_01_create_respostas_nps.js          # Tabela de cursos
+│   │   ├── 20260310_02_create_respostas_comunicacao.js  # Tabela de publicidade
+│   │   ├── 20260318_03_create_respostas_engenharia.js   # Tabela de engenharia
+│   │   └── 20260320_04_add_melhorias_engenharia.js      # Colunas de melhoria
 │   ├── routes/
-│   │   ├── nps.js           # Rotas API cursos
-│   │   ├── comunicacao.js   # Rotas API publicidade
-│   │   └── engenharia.js    # Rotas API engenharia
-│   ├── server.js            # Servidor Express
-│   ├── database.js          # Conexão MySQL via Knex
-│   ├── knexfile.js          # Configuração Knex
-│   ├── package.json         # Dependências
-│   └── .env.example         # Modelo de variáveis
+│   │   ├── nps.js           # API dos cursos
+│   │   ├── comunicacao.js   # API da publicidade
+│   │   └── engenharia.js    # API da engenharia
+│   ├── server.js            # Servidor Express principal
+│   ├── database.js          # Conexão com MySQL via Knex
+│   ├── knexfile.js          # Configuração de ambientes (dev/prod)
+│   └── package.json
 │
 └── frontend/
-    ├── src/
-    │   ├── services/
-    │   │   └── api.js                      # Cliente Axios
-    │   ├── components/
-    │   │   ├── NPSGauge.jsx                # Velocímetro NPS
-    │   │   ├── CursoCard.jsx               # Card de curso
-    │   │   ├── FeedbackCard.jsx            # Card de feedback
-    │   │   └── CookieBanner.jsx            # Banner de cookies
-    │   ├── pages/
-    │   │   ├── Dashboard.jsx               # Dashboard principal (cursos)
-    │   │   ├── DashboardPublicidade.jsx    # Dashboard publicidade
-    │   │   ├── DashboardEngenharia.jsx     # Dashboard engenharia
-    │   │   ├── CursoDetalhes.jsx           # Detalhes de um curso
-    │   │   └── LoginPage.jsx               # Página de login
-    │   ├── App.jsx         # App principal com rotas
-    │   ├── AuthContext.jsx # Contexto de autenticação
-    │   └── index.css       # Estilos globais
-    ├── package.json
-    └── vite.config.js
+    └── src/
+        ├── components/
+        │   ├── NPSGauge.jsx       # Velocímetro NPS (gráfico semicircular)
+        │   ├── CursoCard.jsx      # Card clicável de curso
+        │   ├── FeedbackCard.jsx   # Card de feedback positivo/negativo
+        │   └── CookieBanner.jsx   # Banner de aceite de cookies
+        ├── pages/
+        │   ├── HomePage.jsx              # Tela de seleção de módulos
+        │   ├── LoginPage.jsx             # Página de login
+        │   ├── Dashboard.jsx             # Dashboard de cursos
+        │   ├── DashboardPublicidade.jsx  # Dashboard de publicidade
+        │   ├── DashboardEngenharia.jsx   # Dashboard de engenharia
+        │   └── CursoDetalhes.jsx         # Detalhes de um curso
+        ├── services/
+        │   └── api.js          # Configuração Axios + funções da API
+        ├── App.jsx             # Rotas da aplicação
+        ├── AuthContext.jsx     # Contexto de autenticação
+        └── index.css           # Estilos globais
 ```
+
+---
 
 ## 🔐 Rotas do Sistema
 
 | Rota | Descrição |
 |---|---|
-| `/` | Dashboard principal — Cursos NPS |
-| `/publicidade` | Dashboard de Publicidade |
-| `/engenharia` | Dashboard de Engenharia |
-| `/curso/:nome` | Detalhes de um curso específico |
-| `/login` | Página de login |
+| `/login` | Página de login — pública |
+| `/` | Seleção de módulo — protegida |
+| `/cursos` | Dashboard de cursos — protegida |
+| `/curso/:nome` | Detalhes de um curso — protegida |
+| `/publicidade` | Dashboard de publicidade — protegida |
+| `/engenharia` | Dashboard de engenharia — protegida |
 
-## 👥 Equipe
+---
 
-Desenvolvido por **Softeo Tecnologia** para o **Canal Solar**
+## 🔗 API Endpoints
 
-## 📄 Licença
+### Cursos
+```
+GET  /api/nps/stats              → Estatísticas gerais
+GET  /api/nps/cursos             → Lista de cursos com NPS
+GET  /api/nps/curso/:nome        → Detalhes de um curso
+GET  /api/nps/respostas          → Respostas individuais
+POST /api/nps/webhook/typebot    → Recebe dados do Typebot
+```
 
-Propriedade do Canal Solar - Todos os direitos reservados
+### Publicidade
+```
+GET  /api/comunicacao/stats              → Estatísticas e gráficos
+GET  /api/comunicacao/respostas          → Respostas individuais
+POST /api/comunicacao/webhook/typebot    → Recebe dados do Typebot
+```
+
+### Engenharia
+```
+GET  /api/engenharia/stats              → Estatísticas e gráficos
+GET  /api/engenharia/respostas          → Respostas individuais
+POST /api/engenharia/webhook/typebot    → Recebe dados do Typebot
+```
+
+---
+
+## ⚙️ Como Rodar Localmente
+
+### Pré-requisitos
+- Node.js 20+
+- MySQL 8.0+
+
+### 1. Clone o repositório
+```bash
+git clone https://github.com/viniciussilva-dev/dashboard-nps.git
+cd dashboard-nps
+```
+
+### 2. Configure o banco de dados
+```bash
+mysql -u root -p
+CREATE DATABASE canalsolar_nps CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+exit
+```
+
+### 3. Configure o backend
+```bash
+cd backend
+npm install
+cp .env.example .env
+# Edite o .env com suas credenciais do MySQL
+npx knex migrate:latest
+npm run dev
+```
+Backend rodando em `http://localhost:3001`
+
+### 4. Configure o frontend
+```bash
+cd ../frontend
+npm install
+npm run dev
+```
+Frontend rodando em `http://localhost:5173`
+
+### 5. Acesse o sistema
+- URL: `http://localhost:5173`
+- Usuário: `admin`
+- Senha: `canalsolar2026`
+
+---
+
+## 🌐 Deploy em Produção
+
+- **Backend** → Ploi (servidor Node.js + MySQL)
+- **Frontend** → Vercel/Netlify (build estático)
+- **CI/CD** → Push no GitHub triggera deploy automático no Ploi
+
+As migrations rodam automaticamente no deploy via comando de start:
+```bash
+npx knex migrate:latest && node server.js
+```
+
+---
+
+## 🤖 Integração com Typebot
+
+O sistema recebe respostas automaticamente via webhook. Quando o cliente finaliza a pesquisa no chatbot, os dados são enviados para a API e aparecem no dashboard em até 30 segundos.
+
+**Exemplo de payload — Engenharia:**
+```json
+{
+  "nome": "Nome do cliente",
+  "e-mail": "email@empresa.com",
+  "empresa": "Nome da Empresa",
+  "avaliacao_agilidade": 9,
+  "avaliacao_conhecimento_tecnico": 8,
+  "avaliacao_qualidade": 10,
+  "avaliacao_pontualidade": 7,
+  "avaliacao_satisfacao": 9,
+  "melhoria_pontualidade": "Poderia melhorar os prazos",
+  "indicaria_amigo": 9
+}
+```
+
+---
+
+## 🎨 Paleta de Cores
+
+```
+#0a1628  → Azul escuro (header)
+#E8192C  → Vermelho Canal Solar (destaque)
+#F59E0B  → Amarelo (logo / zona aperfeiçoamento)
+#10B981  → Verde (promotores / zona excelência)
+#3B82F6  → Azul (neutros / zona qualidade)
+#EF4444  → Vermelho (detratores / zona crítico)
+```
+
+---
+
+## 👨‍💻 Desenvolvido por
+
+**Vinicius Silva** — [github.com/viniciussilva-dev](https://github.com/viniciussilva-dev)
+
+Desenvolvido para a **Softeo Tecnologia** · Cliente: **Canal Solar**
 
 ---
 
