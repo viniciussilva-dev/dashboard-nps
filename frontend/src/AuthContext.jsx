@@ -4,8 +4,7 @@ const AuthContext = createContext(null);
 
 // Credenciais fixas — edite aqui para adicionar usuarios
 const CREDENTIALS = {
-  'admin': 'canalsolar2026',
-  'equipe': 'solar@2026',
+/coloque aqui as credencias para fazer login
 };
 
 export const AuthProvider = ({ children }) => {
